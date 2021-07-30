@@ -1,0 +1,151 @@
+﻿<!DOCTYPE html>
+
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.10.21/css/jquery.dataTables.min.css" />
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js" integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy" crossorigin="anonymous"></script>
+    <script src="https://cdn.datatables.net/1.10.21/js/jquery.dataTables.min.js"></script>
+    <title>Azure DevOps Lists</title>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+		<div class="container">
+			<h2>Azure DevOps Lists</h2>&nbsp;&nbsp;
+				<input type="text" id="organization" placeholder="Organization Name">&nbsp;&nbsp;
+				<input type="password" id="pat" placeholder="Personal Access Token">&nbsp;&nbsp;
+				<button type="button" onclick="LoadAllTabs()">Submit</button>&nbsp;&nbsp;
+				<span style="font-size:10pt;font-style:italic;"><a href="https://docs.microsoft.com/en-us/azure/devops/organizations/accounts/use-personal-access-tokens-to-authenticate?view=azure-devops&tabs=preview-page" target="_blank">(How to get your personal access token)</a><span>
+		</div>
+    </nav>
+        <main role="main" class="container">
+            
+
+            <div>
+
+                <!-- Nav tabs -->
+                <ul class="nav nav-tabs" id="myTab" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <a class="nav-link active" id="GetAllProjects-tab" data-toggle="tab" href="#GetAllProjects" role="tab" aria-controls="GetAllProjects" aria-selected="true" onclick="GetAllProjects()">Projects</a>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <a class="nav-link" id="GetAllRepositories-tab" data-toggle="tab" href="#GetAllRepositories" role="tab" aria-controls="GetAllRepositories" aria-selected="false" onclick="GetAllRepositories()">Repositories</a>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <a class="nav-link" id="GetAllWorkItems-tab" data-toggle="tab" href="#GetAllWorkItems" role="tab" aria-controls="GetAllWorkItems" aria-selected="false" onclick="MakeDataTable()">Work Items</a>
+                    </li>
+                </ul>
+
+                <!-- Tab panes -->
+                <div class="tab-content">
+                    <div role="tabpanel" class="tab-pane active" id="GetAllProjects">
+                    </div>
+                    <div role="tabpanel" class="tab-pane" id="GetAllRepositories"></div>
+                    <div role="tabpanel" class="tab-pane" id="GetAllWorkItems"></div>
+                </div>
+
+            </div>
+
+            <script>
+                function LoadAllTabs() {
+                    GetAllProjects();
+                    GetAllRepositories();
+                    GetAllWorkItems();
+
+                }
+                function GetAllProjects() {
+                    var myPAT = document.getElementById("pat").value;
+                    var myOrg = document.getElementById("organization").value;
+
+                    var pUrl = "https://dev.azure.com/" + myOrg + "/_apis/projects?api-version=6.0";
+                    var base64Pat = btoa(":" + myPAT);
+                    var b = "Basic " + base64Pat;
+
+                    var request = new XMLHttpRequest;
+                    request.open("GET", pUrl, true);
+                    request.setRequestHeader("Authorization", b);
+
+                    request.onload = function () {
+                        document.getElementById("GetAllProjects").innerHTML = '<p>' + pUrl + '</p>';
+                        document.getElementById("GetAllProjects").innerHTML += '<table id="AllProjectsTable" class="display"><thead><tr><th>Project</th><th>Description</th></tr></thead><tbody></tbody></table>';
+                        var myObj = JSON.parse(this.response);
+                        myObj.value.forEach(function (item, index) {
+                            document.getElementById("AllProjectsTable").childNodes[1].innerHTML += '<tr><td><a href="https://dev.azure.com/' + myOrg + '/' + item.name + '" target="_blank">' + item.name + '</a></td><td>' + item.description + '</td></tr>';
+                        });
+                        $('#AllProjectsTable').DataTable({"paging":false});
+                    }
+                    request.send();
+                }
+                function GetAllRepositories() {
+                    var myPAT = document.getElementById("pat").value;
+                    var myOrg = document.getElementById("organization").value;
+
+                    var pUrl = "https://dev.azure.com/" + myOrg + "/_apis/git/repositories?api-version=6.0";
+                    var base64Pat = btoa(":" + myPAT);
+                    var b = "Basic " + base64Pat;
+
+                    var request = new XMLHttpRequest;
+                    request.open("GET", pUrl, true);
+                    request.setRequestHeader("Authorization", b);
+
+                    request.onload = function () {
+                        document.getElementById("GetAllRepositories").innerHTML = '<p>' + pUrl + '</p>';
+                        document.getElementById("GetAllRepositories").innerHTML += '<table id="AllRepositoriesTable" class="display"><thead><tr><th>Project</th><th>Repository Name<th>URL</th></tr></thead><tbody></tbody></table>';
+						document.getElementById("GetAllRepositories").innerHTML += '<p><a href="https://docs.microsoft.com/en-us/rest/api/azure/devops/git/repositories/list?view=azure-devops-rest-6.1#gitrepository" target="_blank">Repository API Documentation</a></p>';
+                        var myObj = JSON.parse(this.response);
+                        myObj.value.forEach(function (item, index) {
+                            document.getElementById("AllRepositoriesTable").childNodes[1].innerHTML += '<tr><td><a href="' + item.project.url + '" target="_blank">' + item.project.name + '</a></td><td>' + item.name + '</td><td><a href="' + item.remoteUrl + '" target="_blank">' + item.remoteUrl + '</a></td></tr>';
+                        });
+                        $('#AllRepositoriesTable').DataTable({"paging":false});
+                    }
+                    request.send();
+                }
+                function GetAllWorkItems() {
+                    var myPAT = document.getElementById("pat").value;
+                    var myOrg = document.getElementById("organization").value;
+					
+                    document.getElementById("GetAllWorkItems").innerHTML = '';
+                    document.getElementById("GetAllWorkItems").innerHTML += '<table id="AllWorkItemsTable" class="display"><thead><tr><th>Priority</th><th>Type</th><th>Work Item #</th><th>Project Name</th><th>Assigned To</th><th>Status</th><th>Description</th><th>Created By</th><th>Created On</th></tr></thead><tbody></tbody></table>';
+
+                    var base64Pat = btoa(":" + myPAT);
+                    var b = "Basic " + base64Pat;
+
+                    var i = 1;
+                    while (i < 1000) {
+                        var pUrl = "https://dev.azure.com/" + myOrg + "/_apis/wit/workitems?ids=" + i + "&api-version=6.0";
+                        var request = new XMLHttpRequest;
+                        request.open("GET", pUrl, true);
+                        request.setRequestHeader("Authorization", b);
+
+                        request.onload = function () {
+                            var resp = this.responseText.replace(/System./g, "System_").replace(/Microsoft.VSTS.Common.Priority/g, "Microsoft_VSTS_Common_Priority");
+                            var myObj = JSON.parse(resp);
+                            if (myObj.hasOwnProperty('message')) {
+                            }
+                            else {
+								var assignedTo = '';
+								if (myObj.value[0].fields.System_AssignedTo !== undefined) { 
+									assignedTo = myObj.value[0].fields.System_AssignedTo.displayName; 
+									}									
+								document.getElementById("AllWorkItemsTable").childNodes[1].innerHTML += '<tr><td>' + myObj.value[0].fields.Microsoft_VSTS_Common_Priority + '</td><td>' + myObj.value[0].fields.System_WorkItemType + '</td><td><a href="https://dev.azure.com/' + myOrg + '/' + myObj.value[0].fields.System_TeamProject + '/_workitems/edit/' + myObj.value[0].id + '" target="_blank">' + myObj.value[0].id + '</a></td><td>' + myObj.value[0].fields.System_TeamProject + '</td><td>' + assignedTo + '</td><td>' + myObj.value[0].fields.System_State + '</td><td>' + myObj.value[0].fields.System_Title + '</td><td>' + myObj.value[0].fields.System_CreatedBy.displayName + '</td><td>' + myObj.value[0].fields.System_CreatedDate + '</td></tr>';
+                            }
+                        }
+                        request.send();
+                        i++;
+                    }  
+
+					document.getElementById("GetAllWorkItems").innerHTML += '<p><a href="https://docs.microsoft.com/en-us/rest/api/azure/devops/wit/work%20items/list?view=azure-devops-rest-6.1" target="_blank">Work Items API Documentation</a></p>';					
+                }
+                function MakeDataTable() {
+                    $('#AllWorkItemsTable').DataTable({"paging":false});
+                }
+            </script>
+        </main>
+
+</body>
+</html>
